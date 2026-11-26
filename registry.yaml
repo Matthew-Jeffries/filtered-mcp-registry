@@ -1,0 +1,43 @@
+# Curated MCP Registry configuration
+#
+# Only the servers listed under `servers:` are exposed by this registry.
+# To approve a new server: add an entry (open a PR), merge, and the deploy
+# workflow publishes it. The running app also hot-reloads this file on change.
+#
+# Find exact server names in the dashboard's "Browse upstream" tab, or at
+# https://api.mcp.github.com/v0.1/servers?search=<term>
+
+registry:
+  title: OneLondon MCP Registry
+
+upstream:
+  url: https://api.mcp.github.com   # any MCP Registry v0.1 API (e.g. https://registry.modelcontextprotocol.io)
+  cache_ttl_seconds: 900            # how long upstream metadata is cached in memory
+  timeout_seconds: 15
+
+servers:
+
+  # Official GitHub MCP server (io.github.github/github-mcp-server, npm @github/mcp)
+  - name: io.github.github/github-mcp-server
+    notes: Approved for all engineers. Use fine-grained PATs.
+    approved_by: platform-security
+    approved_on: 2026-11-26
+
+  # Official Azure DevOps MCP server (github.com/microsoft/azure-devops-mcp, npm @azure-devops/mcp)
+  - name: microsoft/azure-devops-mcp
+    notes: Official Microsoft server. Signs in with the developer's own Entra ID / Azure DevOps credentials.
+    approved_by: platform-security
+    approved_on: 2026-11-26
+
+
+  # Pin to specific reviewed versions. "latest" = newest approved version.
+  #- name: io.github.upstash/context7
+  #  versions: ["4.7.3"]
+  #  notes: Docs lookup. Remote endpoint only.
+  #  approved_by: platform-security
+  #  approved_on: 2026-11-20
+  #- name: microsoft/markitdown
+  #  approved_by: platform-security
+  #  approved_on: 2026-11-26
+  # Shorthand: a bare name is also accepted.
+  #- io.github.ChromeDevTools/chrome-devtools-mcp

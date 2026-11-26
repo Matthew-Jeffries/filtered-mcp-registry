@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCP Registry</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%232f6f5e'/><path d='M9 22V10l7 7 7-7v12' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<style>
+  :root {
+    --bg: #f6f5f1; --panel: #ffffff; --ink: #1d1f1e; --muted: #6a6f6c; --line: #e3e1da;
+    --accent: #2f6f5e; --accent-ink: #ffffff; --accent-soft: #e3efe9;
+    --warn: #9a5b00; --warn-soft: #fbf0dc; --chip: #f0eee8; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141615; --panel: #1c1f1e; --ink: #e8eae8; --muted: #9aa19d; --line: #2c312f;
+      --accent: #6fbfa5; --accent-ink: #0f1a16; --accent-soft: #1f3330; --warn: #f0b45a; --warn-soft: #34291a; --chip: #262a28;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  a { color: var(--accent); }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+  header { border-bottom: 1px solid var(--line); background: var(--panel); }
+  .top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between; padding: 18px 0; }
+  h1 { font-size: 20px; margin: 0; letter-spacing: -0.01em; }
+  .sub { color: var(--muted); font-size: 13px; }
+  .endpoint { display: flex; align-items: center; gap: 8px; background: var(--chip); border: 1px solid var(--line); border-radius: 8px; padding: 6px 6px 6px 12px; max-width: 100%; }
+  .endpoint code { font-family: var(--mono); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  button { font: inherit; cursor: pointer; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); padding: 4px 10px; font-size: 13px; }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  button:hover { filter: brightness(0.96); }
+  nav { display: flex; gap: 4px; }
+  nav button { border: none; border-bottom: 2px solid transparent; border-radius: 0; background: none; padding: 10px 12px; font-size: 14px; color: var(--muted); }
+  nav button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+  main { padding: 20px 0 48px; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  input[type=search] { font: inherit; width: min(420px, 100%); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+  .status { font-size: 13px; color: var(--muted); }
+  .status b { color: var(--ink); font-weight: 600; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .card.err { border-color: var(--warn); background: var(--warn-soft); }
+  .head { display: flex; gap: 12px; align-items: flex-start; }
+  .icon { width: 36px; height: 36px; border-radius: 8px; flex: none; background: var(--chip); object-fit: cover; }
+  .title { font-weight: 600; font-size: 15px; }
+  .name { font-family: var(--mono); font-size: 12px; color: var(--muted); word-break: break-all; }
+  .desc { color: var(--ink); font-size: 14px; margin: 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font-size: 12px; background: var(--chip); border-radius: 999px; padding: 2px 9px; font-family: var(--mono); }
+  .chip.ok { background: var(--accent-soft); color: var(--accent); }
+  .chip.warn { background: var(--warn-soft); color: var(--warn); }
+  .meta { font-size: 12px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 8px; }
+  .notes { font-size: 13px; background: var(--accent-soft); border-radius: 8px; padding: 6px 10px; }
+  .rows { display: flex; flex-direction: column; gap: 8px; }
+  .row { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: flex; gap: 12px; align-items: center; }
+  .row .body { flex: 1; min-width: 0; }
+  .row .desc { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .empty { text-align: center; color: var(--muted); padding: 40px 0; }
+  .banner { background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 14px; }
+  details.help { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin-bottom: 16px; font-size: 14px; }
+  details.help summary { cursor: pointer; font-weight: 600; }
+  pre { font-family: var(--mono); font-size: 12px; background: var(--chip); padding: 10px; border-radius: 8px; overflow-x: auto; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } .row { flex-wrap: wrap; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap top">
+    <div>
+      <h1 id="title">MCP Registry</h1>
+      <div class="sub">Approved MCP servers, mirrored from <span id="upstream">upstream</span></div>
+    </div>
+    <div class="endpoint" title="Registry URL for VS Code / GitHub Copilot">
+      <code id="endpoint"></code>
+      <button class="primary" id="copyEndpoint">Copy URL</button>
+    </div>
+  </div>
+  <div class="wrap">
+    <nav role="tablist">
+      <button role="tab" aria-selected="true" data-tab="approved">Approved <span id="approvedCount"></span></button>
+      <button role="tab" aria-selected="false" data-tab="browse">Browse upstream</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="configError" class="banner" hidden></div>
+
+  <section id="tab-approved">
+    <details class="help">
+      <summary>How developers use this registry</summary>
+      <p>Point MCP clients at the registry URL above. For GitHub Copilot, an org/enterprise admin sets it under
+        <em>Copilot policies → MCP servers → MCP Registry URL</em>. In VS Code it can also be set with:</p>
+      <pre id="vscodeSnippet"></pre>
+      <p>To approve a new server, add it to <code>registry.yaml</code> (use <em>Browse upstream</em> to copy a snippet) and merge.</p>
+    </details>
+    <div class="toolbar">
+      <input type="search" id="filter" placeholder="Filter approved servers…" aria-label="Filter approved servers">
+      <div class="status" id="status">Loading…</div>
+    </div>
+    <div class="grid" id="approved"></div>
+  </section>
+
+  <section id="tab-browse" hidden>
+    <div class="toolbar">
+      <form id="searchForm" style="display:flex;gap:8px;flex:1;min-width:0">
+        <input type="search" id="upq" placeholder="Search the upstream registry…" aria-label="Search upstream">
+        <button class="primary" type="submit">Search</button>
+      </form>
+    </div>
+    <div class="rows" id="upstreamRows"></div>
+    <div style="text-align:center;margin-top:16px"><button id="more" hidden>Load more</button></div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const registryUrl = location.origin;
+let approvedEntries = [], status = null, nextCursor = null;
+
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 1600); }
+async function copy(text, msg = "Copied") { try { await navigator.clipboard.writeText(text); toast(msg); } catch { prompt("Copy:", text); } }
+const ghMeta = (s) => s?._meta?.["io.modelcontextprotocol.registry/publisher-provided"]?.github || {};
+const safeUrl = (u) => /^https?:\/\//i.test(u || "") ? u : "";
+
+function iconFor(s) { return safeUrl(s.icons?.[0]?.src) || safeUrl(ghMeta(s).ownerAvatarUrl) || ""; }
+
+function transportChips(s) {
+  const chips = [];
+  for (const p of s.packages || []) chips.push(`${p.registryType}${p.runtimeHint ? " · " + p.runtimeHint : ""}`);
+  for (const r of s.remotes || []) chips.push(`remote · ${r.type}`);
+  return [...new Set(chips)].map((c) => `<span class="chip">${esc(c)}</span>`).join("");
+}
+
+function renderApproved() {
+  const q = $("#filter").value.trim().toLowerCase();
+  const byName = new Map(approvedEntries.map((e) => [e.server.name, e]));
+  const cards = [];
+  for (const a of status?.approved || []) {
+    const e = byName.get(a.name);
+    const err = status.errors?.[a.name];
+    const s = e?.server || { name: a.name };
+    const hay = [s.name, s.title, s.description, a.notes].join(" ").toLowerCase();
+    if (q && !hay.includes(q)) continue;
+    const icon = iconFor(s);
+    const repo = safeUrl(s.repository?.url), site = safeUrl(s.websiteUrl);
+    cards.push(`
+      <article class="card${e ? "" : " err"}">
+        <div class="head">
+          ${icon ? `<img class="icon" src="${esc(icon)}" alt="" loading="lazy">` : `<div class="icon"></div>`}
+          <div style="min-width:0">
+            <div class="title">${esc(s.title || ghMeta(s).displayName || s.name.split("/").pop())}</div>
+            <div class="name">${esc(s.name)}</div>
+          </div>
+        </div>
+        ${s.description ? `<p class="desc">${esc(s.description)}</p>` : ""}
+        <div class="chips">
+          ${s.version ? `<span class="chip ok">v${esc(s.version)}</span>` : ""}
+          ${a.versions ? `<span class="chip">pinned: ${esc(a.versions.join(", "))}</span>` : ""}
+          ${transportChips(s)}
+          ${err ? `<span class="chip warn">${esc(err)}</span>` : ""}
+        </div>
+        ${a.notes ? `<div class="notes">${esc(a.notes)}</div>` : ""}
+        <div class="meta">
+          ${a.approvedBy ? `Approved by <b>${esc(a.approvedBy)}</b>` : "Approved"}${a.approvedOn ? ` on ${esc(a.approvedOn)}` : ""}
+          ${repo ? ` · <a href="${esc(repo)}" target="_blank" rel="noopener">repo</a>` : ""}
+          ${site ? ` · <a href="${esc(site)}" target="_blank" rel="noopener">website</a>` : ""}
+          ${e ? ` · <a href="/v0.1/servers/${encodeURIComponent(s.name)}/versions" target="_blank">json</a>` : ""}
+        </div>
+      </article>`);
+  }
+  $("#approved").innerHTML = cards.join("") || `<div class="empty">No approved servers match.</div>`;
+}
+
+async function loadApproved() {
+  const [st, list] = await Promise.all([
+    fetch("/api/status").then((r) => r.json()),
+    (async () => {
+      let out = [], cursor = "";
+      do {
+        const r = await fetch(`/v0.1/servers?limit=100${cursor ? "&cursor=" + encodeURIComponent(cursor) : ""}`).then((r) => r.json());
+        out = out.concat(r.servers || []); cursor = r.metadata?.nextCursor;
+      } while (cursor);
+      return out;
+    })(),
+  ]);
+  status = st; approvedEntries = list;
+  document.title = st.title; $("#title").textContent = st.title;
+  $("#upstream").textContent = new URL(st.upstream).host;
+  $("#approvedCount").textContent = `(${st.approvedCount})`;
+  const when = st.lastSync ? new Date(st.lastSync).toLocaleString() : "never";
+  const nErr = Object.keys(st.errors || {}).length;
+  $("#status").innerHTML = `<b>${st.availableCount}</b> of ${st.approvedCount} available · synced ${esc(when)}${nErr ? ` · <span style="color:var(--warn)">${nErr} issue${nErr > 1 ? "s" : ""}</span>` : ""}`;
+  const ce = $("#configError"); ce.hidden = !st.configError; ce.textContent = st.configError ? `Config error — still serving the last valid config: ${st.configError}` : "";
+  renderApproved();
+}
+
+function yamlSnippet(name) {
+  const today = new Date().toISOString().slice(0, 10);
+  return `  - name: ${name}\n    notes: \n    approved_by: \n    approved_on: ${today}\n`;
+}
+
+async function searchUpstream(append = false) {
+  const q = $("#upq").value.trim();
+  const params = new URLSearchParams({ limit: "30" });
+  if (q) params.set("search", q);
+  if (append && nextCursor) params.set("cursor", nextCursor);
+  const rows = $("#upstreamRows");
+  if (!append) rows.innerHTML = `<div class="empty">Searching…</div>`;
+  const r = await fetch(`/api/upstream/servers?${params}`);
+  const data = await r.json();
+  if (!r.ok) { rows.innerHTML = `<div class="banner">${esc(data.error || "Upstream error")}</div>`; return; }
+  nextCursor = data.metadata?.nextCursor || null;
+  const html = (data.servers || []).map((e) => {
+    const s = e.server, icon = iconFor(s);
+    return `<div class="row">
+      ${icon ? `<img class="icon" src="${esc(icon)}" alt="" loading="lazy">` : `<div class="icon"></div>`}
+      <div class="body">
+        <div><span class="title">${esc(s.title || ghMeta(s).displayName || s.name)}</span> <span class="name">${esc(s.name)} · v${esc(s.version)}</span></div>
+        <div class="desc">${esc(s.description)}</div>
+      </div>
+      ${e.approved ? `<span class="chip ok">approved</span>` : `<button data-yaml="${esc(s.name)}">Copy YAML</button>`}
+    </div>`;
+  }).join("");
+  if (append) rows.insertAdjacentHTML("beforeend", html); else rows.innerHTML = html || `<div class="empty">No results.</div>`;
+  $("#more").hidden = !nextCursor;
+}
+
+document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click", () => {
+  document.querySelectorAll("nav button").forEach((x) => x.setAttribute("aria-selected", x === b));
+  $("#tab-approved").hidden = b.dataset.tab !== "approved";
+  $("#tab-browse").hidden = b.dataset.tab !== "browse";
+  if (b.dataset.tab === "browse" && !$("#upstreamRows").children.length) searchUpstream();
+}));
+$("#filter").addEventListener("input", renderApproved);
+$("#searchForm").addEventListener("submit", (ev) => { ev.preventDefault(); searchUpstream(); });
+$("#more").addEventListener("click", () => searchUpstream(true));
+$("#upstreamRows").addEventListener("click", (ev) => {
+  const name = ev.target.closest("button[data-yaml]")?.dataset.yaml;
+  if (name) copy(yamlSnippet(name), "YAML snippet copied — paste under servers:");
+});
+$("#endpoint").textContent = registryUrl;
+$("#copyEndpoint").addEventListener("click", () => copy(registryUrl, "Registry URL copied"));
+$("#vscodeSnippet").textContent = `// settings.json\n"chat.mcp.gallery.serviceUrl": "${registryUrl}"`;
+
+loadApproved().catch((e) => { $("#status").textContent = "Failed to load: " + e.message; });
+</script>
+</body>
+</html>
