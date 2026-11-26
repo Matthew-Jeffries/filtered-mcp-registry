@@ -88,9 +88,9 @@ Environment variables: `REGISTRY_CONFIG` (path to the YAML file), `UPSTREAM_URL`
    az deployment group create -g rg-mcp-registry -f infra/main.bicep -p appName=<unique-name>
    ```
 2. **Set up GitHub → Azure OIDC.** Create an Entra app or managed identity with a federated credential for this repo and give it the *Website Contributor* role on the web app. Then add:
-   - secrets `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`
-   - variable `AZURE_WEBAPP_NAME`
+   - secrets `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_WEBAPP_NAME`, and `AZURE_WEBAPP_HOSTNAME`
    - a `production` environment (add required reviewers there if you want a second approval gate)
+   Set `AZURE_WEBAPP_HOSTNAME` to the hostname in the App Service publishing profile's `destinationAppUrl`, without the scheme or path. The workflow masks this hostname before deployment because the deploy action logs the application URL. If migrating from the `AZURE_WEBAPP_NAME` variable, create the secret with the same value before merging and remove the old variable. Keep the hostname secret current if it changes. Log masking is not guaranteed for transformed values and does not make the app private.
 3. Push to `main`. [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) tests, validates and zip-deploys the app, and Azure runs `pip install` during the deploy.
 
 Quick manual deploy without CI:
