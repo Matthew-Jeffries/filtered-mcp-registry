@@ -30,6 +30,16 @@ jobs:
     environment: production
     steps:
       - uses: actions/checkout@v7.0.1
+      - name: Mask deployment hostname
+        env:
+          WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
+          WEBAPP_HOSTNAME: ${{ secrets.AZURE_WEBAPP_HOSTNAME }}
+        run: |
+          if [[ -z "$WEBAPP_NAME" || ! "$WEBAPP_HOSTNAME" =~ ^[a-zA-Z0-9.-]+$ ]]; then
+            echo "::error::Set AZURE_WEBAPP_NAME and AZURE_WEBAPP_HOSTNAME secrets (hostname only, without scheme or path)."
+            exit 1
+          fi
+          echo "::add-mask::$WEBAPP_HOSTNAME"
       - name: Package
         run: zip -r app.zip app.py registry.yaml requirements.txt static
       - uses: azure/login@v3.1.0
@@ -39,5 +49,5 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       - uses: azure/webapps-deploy@v3.0.8
         with:
-          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
           package: app.zip
