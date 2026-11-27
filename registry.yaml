@@ -30,11 +30,9 @@ servers:
     approved_on: 2026-11-26
 
 
-  # Pin to specific reviewed versions. "latest" = newest approved version.
   - name: io.github.upstash/context7
-    versions: ["4.7.3"]
     notes: Documentation lookup; upstream provides a hosted endpoint, and search queries are sent to Context7.
-    approved_by: Matthew-Jeffries
+    approved_by: platform-security
     approved_on: 2026-11-27
   #- name: microsoft/markitdown
   #  approved_by: platform-security
